@@ -1,0 +1,9 @@
+services:
+  research-companion:
+    build: .
+    container_name: research-companion
+    ports:
+      - "7860:7860"
+    volumes:
+      - ./data:/app/data
+    restart: unless-stopped
