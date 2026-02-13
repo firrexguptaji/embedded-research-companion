@@ -1,4 +1,30 @@
 services:
+
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    restart: unless-stopped
+    entrypoint: ["/bin/sh", "-c"]
+    command: >
+      "
+      ollama serve &
+      echo 'Waiting for Ollama to start...';
+      until curl -s http://localhost:11434 > /dev/null; do sleep 2; done;
+      echo 'Pulling models...';
+      ollama pull mistral;
+      ollama pull nomic-embed-text;
+      wait
+      "
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
   research-companion:
     build: .
     container_name: research-companion
@@ -6,4 +32,10 @@ services:
       - "7860:7860"
     volumes:
       - ./data:/app/data
+    depends_on:
+      ollama:
+        condition: service_healthy
     restart: unless-stopped
+
+volumes:
+  ollama_data:
